@@ -13,11 +13,11 @@ headers = {
 
 
 def get_proxy():
-    return requests.get("http://127.0.0.1:5010/get/").json()
+    return requests.get("http://81.69.225.235:5010/get/").json()
 
 
 def delete_proxy(proxy):
-    requests.get("http://127.0.0.1:5010/delete/?proxy={}".format(proxy))
+    requests.get("http://81.69.225.235:5010/delete/?proxy={}".format(proxy))
 
 
 def get_html(asin: str):
