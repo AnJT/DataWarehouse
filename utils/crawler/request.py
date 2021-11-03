@@ -25,7 +25,7 @@ def get_html(asin: str, headers):
                 result = html.text.encode('gbk', 'ignore').decode('gbk')
                 soup = BeautifulSoup(result, 'lxml')
                 movie_title = str(soup.select('title')[0].getText())
-                if (movie_title == 'Robot Check') or (movie_title == 'Sorry! Something went wrong!') or (movie_title == 'Amazon.com'):
+                if (movie_title != 'Robot Check') and (movie_title != 'Sorry! Something went wrong!') and (movie_title != 'Amazon.com'):
                     review_html = requests.get(url=review_base_url + asin, headers=headers, proxies={"http": "http://{}".format(proxy)})
                     return html, review_html
             except Exception:
