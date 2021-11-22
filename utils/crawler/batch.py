@@ -2,6 +2,7 @@ from request import *
 from multiprocessing import Pool
 import random
 import json
+import os
 import concurrent.futures
 from parser_html import parse_home, parse_review
 
@@ -56,6 +57,11 @@ def process(asin: str):
 
 if __name__ == '__main__':
     asin_list = asin_file.readlines()
+    asin_list = [x.strip() for x in asin_list]
+    done_list = os.listdir('../../data/review')
+    done_list = [x.split('.')[0] for x in done_list]
+    asin_list = list(set(asin_list) - set(done_list))
+    print(len(asin_list))
     # with Pool() as p:
     #     p.map(process, asin_list)
     with concurrent.futures.ProcessPoolExecutor() as executor:

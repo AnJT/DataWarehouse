@@ -52,38 +52,51 @@ def get_review(asin: str, headers):
         retry_count = 5
         session = requests.session()
         while retry_count > 0:
-            html = session.get(url=review_base_url + asin, headers=headers, proxies={"http": "http://{}".format(proxy)})
-            result = html.text.encode('gbk', 'ignore').decode('gbk')
-            soup = BeautifulSoup(result, 'lxml')
-            movie_title = str(soup.select('title')[0].getText())
-            if movie_title.strip() == 'Page Not Found':
-                with open('../../data/invalid_asin.txt', 'a') as f:
-                    f.write(asin.strip() + '\n')
-                return None
-            if (movie_title != 'Robot Check') and (movie_title != 'Sorry! Something went wrong!') and (movie_title != 'Amazon.com'):
-                return html
-            else:
-                captcha = soup.find(name="div", attrs={"class" : "a-row a-text-center"})
-                captcha_link = captcha.img['src']
-                captcha =  AmazonCaptcha.fromlink(captcha_link)
-                solution = captcha.solve()
-                amaz_code = soup.find(name="input", attrs={"name" : "amzn"})
-                amaz_code = amaz_code['value']
-                amaz_r_code = soup.find(name="input", attrs={"name" : "amzn-r"})
-                amaz_r_code = amaz_r_code['value']
-                captcha_url = f'https://www.amazon.com/errors/validateCaptcha?amzn={amaz_code}&amzn-r={amaz_r_code}&field-keywords={solution}'
-                print(captcha_url)
-                html = session.get(url=captcha_url, headers=headers, proxies={"http": "http://{}".format(proxy)})
-                with open('hh.html', 'w+') as f:
-                    f.write(html.text.encode('gbk', 'ignore').decode('gbk'))
-                time.sleep(0.5)
-                pass
-            retry_count -= 1
+            try:
+                html = session.get(url=review_base_url + asin, headers=headers, proxies={"http": "http://{}".format(proxy)})
+                result = html.text.encode('gbk', 'ignore').decode('gbk')
+                soup = BeautifulSoup(result, 'lxml')
+                movie_title = str(soup.select('title')[0].getText())
+                if movie_title.strip() == 'Page Not Found':
+                    with open('../../data/invalid_asin.txt', 'a') as f:
+                        f.write(asin.strip() + '\n')
+                    session.close()
+                    return None
+                if (movie_title != 'Robot Check') and (movie_title != 'Sorry! Something went wrong!') and (movie_title != 'Amazon.com'):
+                    session.close()
+                    return html
+                else:
+                    try:
+                        if movie_title == 'Sorry! Something went wrong!':
+                            time.sleep(0.5)
+                        else:
+                            session = verify(soup, session, proxy, headers)
+                    except Exception as e:
+                        print(e)
+                retry_count -= 1
+            except Exception as e:
+                print(e)
+                retry_count -= 1
         retry_proxy_count -= 1
+        session.close()
         # delete_proxy(proxy)
     with open('../../data/failed_review_asin.txt', 'a') as f:
         f.write(asin.strip() + '\n')
     return None
+
+def verify(soup, session, proxy, headers):
+    captcha = soup.find(name="div", attrs={"class" : "a-row a-text-center"})
+    captcha_link = captcha.img['src']
+    captcha =  AmazonCaptcha.fromlink(captcha_link)
+    solution = captcha.solve()
+    amaz_code = soup.find(name="input", attrs={"name" : "amzn"})
+    amaz_code = amaz_code['value']
+    amaz_r_code = soup.find(name="input", attrs={"name" : "amzn-r"})
+    amaz_r_code = amaz_r_code['value']
+    captcha_url = f'https://www.amazon.com/errors/validateCaptcha?amzn={amaz_code}&amzn-r={amaz_r_code}&field-keywords={solution}'
+    print(captcha_url)
+    html = session.get(url=captcha_url, headers=headers, proxies={"http": "http://{}".format(proxy)})
+    return session
 
 # def get_html(asin: str, headers):
 #     retry_count = 5
