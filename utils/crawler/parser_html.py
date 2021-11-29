@@ -4,12 +4,57 @@ import sys
 import calendar
 from parser_utils import spoken_word_to_number
 
-def parse_home(html):
+def parse_home(html, asin):
     if html == None:
         print('html None')
         return None
     soup = BeautifulSoup(html.text.encode('gbk', 'ignore').decode('gbk'), 'lxml')
-    res = {}
+    for a in soup.findAll(name='a', attrs={"class" : "a-link-normal a-color-tertiary"}):
+        if str(a.text).strip() == 'TV':
+            with open('../../data/tv.txt', 'a') as f:
+                f.write(asin.strip() + '\n')
+            return None
+    res = {'neighbors': [], 'bylineInfo':{}}
+    neighbor_div = soup.find(name="div", attrs={"id": "MediaMatrix"})
+    if neighbor_div == None:
+        with open('../../data/tv.txt', 'a') as f:
+            f.write(asin.strip() + '\n')
+        return None
+    ul = neighbor_div.find(name='ul')
+    for li in ul.find_all('li'):
+        a = li.find("a")
+        if str(a['href']).strip() == 'javascript:void(0)':
+            res['neighbors'].append(asin)
+        else:
+            asin_neighbor = re.search('.*dp/(.*?)/ref.*', a['href']).group(1)
+            res['neighbors'].append(asin_neighbor)
+    productTitle = soup.find(name="span", attrs={"id": "productTitle"})
+    res['productTitle'] = str(productTitle.text).strip()
+    bylineInfo_div = soup.find(name="div", attrs={"id": "bylineInfo"})
+    if bylineInfo_div != None:
+        values = []
+        for span in bylineInfo_div.find_all("span", {"class": "author"}):
+            if span.span != None:
+                key = re.search('.*?\((.*?)\).*', span.span.span.text).group(1)
+                if len(values) == 0:
+                    if key in  res['bylineInfo']:
+                        res['bylineInfo'][key] += ','+span.a.text
+                    else:
+                        res['bylineInfo'][key] = span.a.text
+                else:
+                    value = ','.join(values)
+                    values = []
+                    if key in  res['bylineInfo']:
+                        res['bylineInfo'][key] += ','+ str(span.a.text) + ',' + value
+                    else:
+                        res['bylineInfo'][key] = str(span.a.text) + ',' + value
+            else:
+                values.append(str(span.a.text))
+    averageCustomerReviews = soup.find('div', id='detailBullets_averageCustomerReviews')
+    if averageCustomerReviews != None:
+        span = averageCustomerReviews.find('span',attrs={"class": "a-icon-alt"})
+        averageCustomerReviews = str(span.text).split()[0]
+        res['averageCustomerReviews'] = float(averageCustomerReviews)
     detail = soup.find('div', id='detailBullets_feature_div').ul
     for li in detail.find_all('li'):
         spans = li.span.find_all('span')
@@ -42,8 +87,11 @@ def parse_review(html):
             helpfulness = parse_helpfulness(str(helpfulness).strip())
         except:
             helpfulness = 0
-        text = customer_review_div.find(name="span", attrs={"data-hook": "review-body"}).span.text
-        text = str(text).strip()
+        try:
+            text = customer_review_div.find(name="span", attrs={"data-hook": "review-body"}).span.text
+            text = str(text).strip()
+        except Exception as e:
+            text = None
         score = customer_review_div.find(name="i", attrs={"data-hook": "review-star-rating"})
         if score == None:
             score = customer_review_div.find(name="i", attrs={"data-hook": "cmps-review-star-rating"})
@@ -66,13 +114,6 @@ def parse_review(html):
                 'summary': summary
             }
         )
-
-        # try: # other countries
-        #     if 'a-divider' in review.next_sibling['class'] or 'a-divider-section' in review.next_sibling['class']:
-        #         print(review.next_sibling['class'])
-        #         break
-        # except:
-        #     pass
     return res
 
 def parse_time(time):
@@ -95,17 +136,17 @@ def parse_helpfulness(helpfulness):
 if __name__ =='__main__':
     from request import *
     from batch import *
-    asin = '0783115539'
+    asin = 'B002UNMW7O'
     headers = get_random_headers()
     try:
-        review_html = get_review(asin, headers)
-        res = parse_review(review_html)
-        print(res[0])
+        html, asin = get_home(asin, headers)
+        res = parse_home(html, asin)
+        print(res)
     except Exception as e:
         print(e)
         print(asin)
         with open('hh.html', 'w+') as f:
-            f.write(review_html.text.encode('gbk', 'ignore').decode('gbk'))
+            f.write(html.text.encode('gbk', 'ignore').decode('gbk'))
         raise e
     # res = parse_home(html)
     with open('hh.json', 'w+') as f:

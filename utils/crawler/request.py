@@ -2,6 +2,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from amazoncaptcha import AmazonCaptcha
+from batch import get_random_headers
 
 base_url = 'https://www.amazon.com/dp/'
 review_base_url = 'https://www.amazon.com/product-reviews/'
@@ -16,33 +17,54 @@ def delete_proxy(proxy):
 
 
 def get_home(asin: str, headers):
-    retry_count = 5
-    retry_proxy_count = 3
+    retry_proxy_count = 6
     while retry_proxy_count > 0:
         proxy = get_proxy().get("proxy")
+        headers = get_random_headers()
+        retry_count = 2
+        session = requests.session()
         while retry_count > 0:
             try:
-                html = requests.get(url=base_url + asin, headers=headers, proxies={"http": "http://{}".format(proxy)})
+                print(retry_count)
+                html = session.get(url=base_url + asin, headers=headers, proxies={"http": "http://{}".format(proxy)})
                 result = html.text.encode('gbk', 'ignore').decode('gbk')
                 soup = BeautifulSoup(result, 'lxml')
                 movie_title = str(soup.select('title')[0].getText())
                 if movie_title.strip() == 'Page Not Found':
-                    with open('../../data/invalid_asin.txt', 'a') as f:
+                    with open('../../data/invalid_home_asin.txt', 'a') as f:
                         f.write(asin.strip() + '\n')
-                    return None
+                    session.close()
+                    return None, asin
                 if (movie_title != 'Robot Check') and (movie_title != 'Sorry! Something went wrong!') and (movie_title != 'Amazon.com'):
+                    for a in soup.findAll(name='a', attrs={"class" : "a-link-normal a-color-tertiary"}):
+                        if str(a.text).strip() == 'TV':
+                            with open('../../data/tv.txt', 'a') as f:
+                                f.write(asin.strip() + '\n')
+                            return None, asin
                     detail = soup.find('div', id='detailBullets_feature_div')
                     if detail == None:
+                        print("detail")
+                        retry_count -= 2
                         continue
-                    return html
-            except Exception:
+                    session.close()
+                    return html, asin
+                else:
+                    print(movie_title)
+                    try:
+                        if movie_title == 'Sorry! Something went wrong!':
+                            exit()
+                        else:
+                            session = verify(soup, session, proxy, headers)
+                    except Exception as e:
+                        print(e)
+                    retry_count -= 1
+            except Exception as e:
+                print(e)
                 retry_count -= 1
-                time.sleep(0.5)
-        delete_proxy(proxy)
         retry_proxy_count -= 1
     with open('../../data/faild_home_asin.txt', 'a') as f:
         f.write(asin.strip() + '\n')
-    return None
+    return None, asin
 
 
 def get_review(asin: str, headers):
@@ -58,7 +80,7 @@ def get_review(asin: str, headers):
                 soup = BeautifulSoup(result, 'lxml')
                 movie_title = str(soup.select('title')[0].getText())
                 if movie_title.strip() == 'Page Not Found':
-                    with open('../../data/invalid_asin.txt', 'a') as f:
+                    with open('../../data/invalid_review_asin.txt', 'a') as f:
                         f.write(asin.strip() + '\n')
                     session.close()
                     return None
@@ -79,7 +101,6 @@ def get_review(asin: str, headers):
                 retry_count -= 1
         retry_proxy_count -= 1
         session.close()
-        # delete_proxy(proxy)
     with open('../../data/failed_review_asin.txt', 'a') as f:
         f.write(asin.strip() + '\n')
     return None
