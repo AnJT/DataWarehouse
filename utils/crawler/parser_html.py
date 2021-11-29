@@ -16,18 +16,14 @@ def parse_home(html, asin):
             return None
     res = {'neighbors': [], 'bylineInfo':{}}
     neighbor_div = soup.find(name="div", attrs={"id": "MediaMatrix"})
-    if neighbor_div == None:
-        with open('../../data/tv.txt', 'a') as f:
-            f.write(asin.strip() + '\n')
-        return None
-    ul = neighbor_div.find(name='ul')
-    for li in ul.find_all('li'):
-        a = li.find("a")
-        if str(a['href']).strip() == 'javascript:void(0)':
-            res['neighbors'].append(asin)
-        else:
-            asin_neighbor = re.search('.*dp/(.*?)/ref.*', a['href']).group(1)
-            res['neighbors'].append(asin_neighbor)
+    res['neighbors'].append(asin)
+    if neighbor_div != None:
+        ul = neighbor_div.find(name='ul')
+        for li in ul.find_all('li'):
+            a = li.find("a")
+            if str(a['href']).strip() != 'javascript:void(0)':
+                asin_neighbor = re.search('.*dp/(.*?)/ref.*', a['href']).group(1)
+                res['neighbors'].append(asin_neighbor)
     productTitle = soup.find(name="span", attrs={"id": "productTitle"})
     res['productTitle'] = str(productTitle.text).strip()
     bylineInfo_div = soup.find(name="div", attrs={"id": "bylineInfo"})
@@ -136,7 +132,7 @@ def parse_helpfulness(helpfulness):
 if __name__ =='__main__':
     from request import *
     from batch import *
-    asin = 'B002UNMW7O'
+    asin = 'B0002DG53G'
     headers = get_random_headers()
     try:
         html, asin = get_home(asin, headers)
