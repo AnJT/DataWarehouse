@@ -132,7 +132,7 @@ def parse_helpfulness(helpfulness):
 if __name__ =='__main__':
     from request import *
     from batch import *
-    asin = 'B0002DG53G'
+    asin = 'B00D0Z2JT2'
     headers = get_random_headers()
     try:
         html, asin = get_home(asin, headers)

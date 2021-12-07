@@ -10,7 +10,7 @@ from parser_html import parse_home, parse_review
 
 ua_file = open('../../lib/fake_useragent_0.1.11.json')
 # asin_file = open('../../data/asin_no_duplicate.txt')
-filed_asin_file = open('../../data/faild_home_asin2.txt', 'r+')
+filed_asin_file = open('../../data/faild_home_asin.txt', 'r+')
 # ua_file = open('lib/fake_useragent_0.1.11.json')
 # asin_file = open('data/asin_no_duplicate.txt')
 ua_json = json.load(ua_file)

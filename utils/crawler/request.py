@@ -118,28 +118,3 @@ def verify(soup, session, proxy, headers):
     print(captcha_url)
     html = session.get(url=captcha_url, headers=headers, proxies={"http": "http://{}".format(proxy)})
     return session
-
-# def get_html(asin: str, headers):
-#     retry_count = 5
-#     retry_proxy_count = 3
-#     while retry_proxy_count > 0:
-#         proxy = get_proxy().get("proxy")
-#         while retry_count > 0:
-#             try:
-#                 html = requests.get(url=base_url + asin, headers=headers, proxies={"http": "http://{}".format(proxy)})
-#                 result = html.text.encode('gbk', 'ignore').decode('gbk')
-#                 soup = BeautifulSoup(result, 'lxml')
-#                 movie_title = str(soup.select('title')[0].getText())
-#                 if movie_title.strip() == 'Page Not Found':
-#                     with open('../../data/invalid_asin.txt', 'a') as f:
-#                         f.write(asin.strip() + '\n')
-#                     return None, None
-#                 if (movie_title != 'Robot Check') and (movie_title != 'Sorry! Something went wrong!') and (movie_title != 'Amazon.com'):
-#                     review_html = requests.get(url=review_base_url + asin, headers=headers, proxies={"http": "http://{}".format(proxy)})
-#                     return html, review_html
-#             except Exception:
-#                 retry_count -= 1
-#                 time.sleep(0.5)
-#         # delete_proxy(proxy)
-#         retry_proxy_count -= 1
-#     return None, None
