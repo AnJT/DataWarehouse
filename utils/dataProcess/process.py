@@ -119,6 +119,6 @@ def check():
 
 if __name__ == '__main__':
     process = Process()
-    process.process_detail()
-    # process.process_review()
+    # process.process_detail()
+    process.process_review()
     # check()
