@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    # 配置 mysql 连接
+    url: 
+    username:
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 3
+      maximum-pool-size: 5
+      max-lifetime: 0
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    database: mysql
+    show-sql: false
+server:
+  port : 8004

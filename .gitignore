@@ -5,9 +5,8 @@ __pycache__/
 *.vscode
 # C extensions
 *.so
-data/detail
-data/review
-data/label
+
+/ETL/data
 
 # Distribution / packaging
 .Python
@@ -144,3 +143,6 @@ cython_debug/
 
 # Pycharm
 .idea/
+
+neo4j/*
+!./DWBackEnd
